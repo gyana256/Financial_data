@@ -3,6 +3,10 @@
   "private": true,
   "scripts": {
     "build": "cd fina/supabase-ui && npm install && npm run build",
-    "dev": "cd fina/supabase-ui && npm run dev"
+    "dev": "cd fina/supabase-ui && npm run dev",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
   }
 }

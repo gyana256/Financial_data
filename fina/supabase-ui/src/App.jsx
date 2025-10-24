@@ -93,6 +93,8 @@ export default function App() {
   const [editingRowId, setEditingRowId] = useState(null)
   const [inlineEdits, setInlineEdits] = useState({})
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editModalRow, setEditModalRow] = useState(null)
+  const [editForm, setEditForm] = useState(blankForm())
 
   // filters
   const [filterType, setFilterType] = useState('All')
@@ -215,16 +217,19 @@ export default function App() {
   }
 
   function startInlineEdit(row) {
-    setEditingRowId(row.id)
-    setInlineEdits({ [row.id]: { name: row.name, date: row.date, type: row.type, amount: String(row.amount) } })
+    // Open the edit modal for the row
+    setEditModalRow(row)
+    setEditForm({ name: row.name || '', date: row.date || '', type: row.type || TYPE_OPTIONS[0], amount: String(row.amount || '') })
   }
 
   function cancelInlineEdit() {
-    setEditingRowId(null)
-    setInlineEdits({})
+    // Close modal fallback
+    setEditModalRow(null)
+    setEditForm(blankForm())
   }
 
   async function saveInlineEdit(id) {
+    // kept for compatibility but not used; prefer saveEditModal
     if (role !== 'admin') { alert('Only admin can edit rows'); return }
     const edits = inlineEdits[id]
     if (!edits) return
@@ -235,6 +240,18 @@ export default function App() {
     setInlineEdits({})
     fetchRows()
     fetchTotals()
+  }
+
+  async function saveEditModal() {
+    if (role !== 'admin') { alert('Only admin can edit rows'); return }
+    if (!editModalRow) return
+    const updates = { name: editForm.name, date: editForm.date, type: editForm.type, amount: parseFloat(editForm.amount) }
+    const { error } = await supabase.from('financial_data').update(updates).eq('id', editModalRow.id)
+    if (error) { alert(error.message); return }
+    setEditModalRow(null)
+    setEditForm(blankForm())
+    await fetchRows()
+    await fetchTotals()
   }
 
   async function deleteRow(id) {
@@ -490,41 +507,31 @@ export default function App() {
         {!loading && displayedRows.length === 0 && <div className="empty">No rows found.</div>}
 
         {displayedRows.map(r => {
-          const isEditing = editingRowId === r.id
-          const edits = inlineEdits[r.id] || {}
           return (
             <div className="row" key={r.id}>
 
               <div className="cell">
-                {isEditing ? <input className="inline-input" value={edits.name} onChange={e => setInlineEdits({ ...inlineEdits, [r.id]: { ...edits, name: e.target.value } })} /> : <span>{r.name}</span>}
+                <span>{r.name}</span>
               </div>
 
               <div className="cell">
-                {isEditing ? <input type="date" className="inline-input" value={edits.date} onChange={e => setInlineEdits({ ...inlineEdits, [r.id]: { ...edits, date: e.target.value } })} /> : <span className="small-muted">{r.date}</span>}
+                <span className="small-muted">{r.date}</span>
               </div>
 
               <div className="cell">
-                {isEditing ? (
-                  <select className="inline-input" value={edits.type} onChange={e => setInlineEdits({ ...inlineEdits, [r.id]: { ...edits, type: e.target.value } })}>
-                    {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                ) : <span className={`badge ${r.type === 'Income' ? 'income' : 'expenditure'}`}>{r.type}</span>}
+                <span className={`badge ${r.type === 'Income' ? 'income' : 'expenditure'}`}>{r.type}</span>
               </div>
 
               <div className="cell amount-cell">
-                {isEditing ? <input className="inline-input" type="number" step="0.01" value={edits.amount} onChange={e => setInlineEdits({ ...inlineEdits, [r.id]: { ...edits, amount: e.target.value } })} /> : <span className="amount">{formatAmount(r.amount)}</span>}
+                <span className="amount">{formatAmount(r.amount)}</span>
               </div>
 
               <div className="actions mobile-actions">
                 {role === 'admin' ? (
                   <>
-                    {!isEditing && <button className="btn edit" onClick={() => startInlineEdit(r)} aria-label={`Edit row ${r.id}`} title="Edit">
+                    <button className="btn edit" onClick={() => startInlineEdit(r)} aria-label={`Edit row ${r.id}`} title="Edit">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/><path d="M20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
-                    </button>}
-                    {isEditing && <button className="btn save" onClick={() => saveInlineEdit(r.id)} aria-label={`Save row ${r.id}`} title="Save">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19.2 20 8.2 17.5 5.7 9 14.2z" fill="currentColor"/></svg>
-                    </button>}
-                    {isEditing && <button className="btn cancel" onClick={cancelInlineEdit} aria-label={`Cancel edit ${r.id}`} title="Cancel">✕</button>}
+                    </button>
                     <button className="btn delete" onClick={() => deleteRow(r.id)} aria-label={`Delete row ${r.id}`} title="Delete">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12z" fill="currentColor"/><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>
                     </button>
@@ -541,9 +548,9 @@ export default function App() {
           )
         })}
       </div>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:12}}>
+  <div className="pagination-row" style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:12}}>
         <div className="small-muted">Showing {rows.length} of {total} total — page total: {formatAmount(pageTotal)}</div>
-        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+  <div style={{display:'flex',gap:8,alignItems:'center'}}>
           <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(0) }}>
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -590,6 +597,26 @@ export default function App() {
               <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:8}}>
                 <button type="button" className="btn cancel" onClick={() => setShowCreateModal(false)}>Cancel</button>
                 <button type="submit" className="btn save">Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Edit Modal */}
+      {editModalRow && (
+        <div className="modal-backdrop" onMouseDown={() => { setEditModalRow(null); setEditForm(blankForm()) }}>
+          <div className="modal" onMouseDown={e => e.stopPropagation()} role="dialog" aria-modal="true">
+            <h3>Edit financial record</h3>
+            <form onSubmit={async (e) => { e.preventDefault(); await saveEditModal() }} className="form modal-form">
+              <input autoFocus className="grow" placeholder="Name" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} required />
+              <input type="date" value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} required />
+              <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })}>
+                {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <input placeholder="Amount" type="number" step="0.01" value={editForm.amount} onChange={e => setEditForm({ ...editForm, amount: e.target.value })} required />
+              <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:8}}>
+                <button type="button" className="btn cancel" onClick={() => { setEditModalRow(null); setEditForm(blankForm()) }}>Cancel</button>
+                <button type="submit" className="btn save">Save</button>
               </div>
             </form>
           </div>

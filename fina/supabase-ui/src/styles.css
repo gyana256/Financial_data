@@ -1,0 +1,221 @@
+.root{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+:root{
+	--bg: #f6f8fb;
+	--card: #ffffff;
+	--muted: #64748b;
+	--accent: #2563eb;
+	--accent-2: #10b981;
+	--danger: #ef4444;
+	--glass: rgba(255,255,255,0.6);
+	--ring: rgba(37,99,235,0.12);
+}
+/* Dark theme */
+html[data-theme="dark"]{
+	--bg: #0b1220;
+	--card: #071126;
+	--muted: #94a3b8;
+	--accent: #60a5fa;
+	--accent-2: #34d399;
+	--danger: #fb7185;
+	--glass: rgba(255,255,255,0.03);
+	--ring: rgba(96,165,250,0.12);
+	color-scheme: dark;
+}
+
+html[data-theme="dark"] body{background:var(--bg);color:#e6eef9}
+html[data-theme="dark"] .container{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 8px 30px rgba(2,6,23,.5)}
+html[data-theme="dark"] .card-title{color:var(--muted)}
+html[data-theme="dark"] .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))}
+html[data-theme="dark"] .filters input, html[data-theme="dark"] .form input, html[data-theme="dark"] .modal{background:#071126}
+html[data-theme="dark"] .btn{border-color:rgba(255,255,255,0.03)}
+/* global box-sizing and prevent horizontal overflow */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body{margin:0;padding:30px;background:var(--bg);color:#0f1720;overflow-x:hidden;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+.container{width:100%;max-width:1100px;margin:0 auto;background:linear-gradient(180deg, rgba(255,255,255,0.9), var(--card));padding:26px;border-radius:14px;box-shadow:0 12px 40px rgba(2,6,23,.06);overflow:hidden}
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.header-row h1{margin:0;font-size:22px;letter-spacing:-0.2px}
+.controls{display:flex;gap:12px;align-items:center}
+.controls .small-muted{background:linear-gradient(90deg, rgba(37,99,235,0.08), rgba(16,185,129,0.06));padding:6px 10px;border-radius:999px;color:var(--muted);font-weight:600}
+.form{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.form input,.form select{padding:10px;border:1px solid rgba(15,23,32,0.06);border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdff);max-width:100%;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)}
+.form input[type="date"]{padding:8px}
+.form .grow{flex:1;min-width:140px}
+.form button{padding:10px 14px;border-radius:10px;border:none;background:var(--accent);color:white;cursor:pointer;min-width:0;box-shadow:0 8px 20px var(--ring)}
+.form .cancel{background:#f1f5f9;color:#0f1720}
+.filters{display:flex;gap:12px;align-items:center}
+.filters input{padding:10px;border:1px solid rgba(15,23,32,0.06);border-radius:10px;min-width:0;background:#fff}
+.table{border-top:1px solid rgba(2,6,23,0.04);border-radius:10px;overflow:hidden}
+/* flexible columns to avoid overflow */
+.row{display:grid;grid-template-columns: minmax(160px,1fr) minmax(120px,160px) minmax(100px,140px) minmax(90px,120px) minmax(110px,160px);padding:14px 16px;border-bottom:1px solid rgba(2,6,23,0.03);align-items:center;grid-column-gap:14px}
+.row.header{font-weight:700;color:#0f1720;background:linear-gradient(90deg,#fff, #fbfdff)}
+.row .cell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.actions{display:flex;gap:10px}
+.btn{padding:8px 12px;border-radius:10px;border:1px solid rgba(15,23,32,0.04);cursor:pointer;min-width:0;background:transparent}
+.btn.edit{background:linear-gradient(90deg,#06b6d4,#0891b2);color:white;box-shadow:0 8px 20px rgba(6,182,212,0.08)}
+.btn.save{background:linear-gradient(90deg,var(--accent),#0b75ff);color:white;box-shadow:0 10px 28px rgba(11,107,255,0.12)}
+.btn.delete{background:linear-gradient(90deg,#fb7185,var(--danger));color:white}
+.btn.cancel{background:#f1f5f9;color:#0f1720}
+.inline-input{width:100%;padding:8px;border:1px solid rgba(15,23,32,0.06);border-radius:8px;max-width:100%}
+.empty{padding:18px;text-align:center;color:var(--muted)}
+.small-muted{font-size:13px;color:var(--muted)}
+
+/* Dashboard summary cards */
+.dashboard{display:flex;gap:14px;margin-bottom:18px}
+.dashboard .card{flex:1;padding:14px 16px;border-radius:12px;background:linear-gradient(180deg, #fff, #fbfdff);box-shadow:0 12px 30px rgba(2,6,23,.04);display:flex;flex-direction:column;justify-content:center}
+.card-title{font-size:13px;color:var(--muted);font-weight:600}
+.card-value{font-size:22px;font-weight:800;margin-top:8px}
+.card.income{border-left:6px solid var(--accent-2)}
+.card.expenditure{border-left:6px solid var(--danger)}
+.card.balance{border-left:6px solid var(--accent)}
+
+@media(max-width:920px){
+	.dashboard{flex-direction:column}
+}
+
+/* sparkline/chart removed; keep small placeholder spacing */
+.sparkline{height:36px}
+
+/* date-range controls small tweaks */
+input[type="date"]{padding:8px;border:1px solid rgba(15,23,32,0.06);border-radius:8px}
+
+/* Mobile responsive tweaks */
+@media (max-width: 920px) {
+	.container{padding:18px}
+	.header-row{flex-direction:column;align-items:flex-start;gap:8px}
+	.controls{width:100%}
+	.filters{width:100%;display:flex;gap:8px;flex-wrap:wrap}
+	.filters input{flex:1;min-width:120px}
+
+	.form{flex-direction:column;gap:10px}
+	.form .grow{width:100%}
+	.form input,.form select,.form button{width:100%}
+
+	/* Make table rows stack vertically for narrow screens */
+	.row{grid-template-columns:1fr;padding:10px 12px;gap:8px}
+	/* hide header row and add inline labels */
+	.row.header{display:none}
+	.row .cell{display:block}
+	.row .cell:nth-child(1)::before{content:"Name: ";font-weight:700}
+	.row .cell:nth-child(2)::before{content:"Date: ";font-weight:700}
+	.row .cell:nth-child(3)::before{content:"Type: ";font-weight:700}
+	.row .cell:nth-child(4)::before{content:"Amount: ";font-weight:700}
+	.row .cell:nth-child(5)::before{content:"Actions: ";font-weight:700}
+	.row .cell::before{display:inline-block;margin-right:6px}
+
+	.actions{display:flex;gap:8px;flex-wrap:wrap}
+	.btn{padding:10px 12px;border-radius:10px;flex:1}
+
+	.inline-input{padding:10px}
+
+	.small-muted{text-align:center}
+}
+
+/* Badges and amount styles */
+.badge{display:inline-block;padding:8px 12px;border-radius:999px;font-weight:700;font-size:13px}
+.badge.income{background:linear-gradient(90deg,#d1fae5,#86efac);color:#065f46}
+.badge.expenditure{background:linear-gradient(90deg,#ffebe8,#fecaca);color:#7f1d1d}
+.amount{font-weight:700}
+
+/* Floating action button */
+.fab{position:fixed;right:20px;bottom:20px;background:linear-gradient(90deg,var(--accent),#0b75ff);color:white;border:none;padding:14px 16px;border-radius:999px;box-shadow:0 18px 50px rgba(11,107,255,.12);font-size:20px;cursor:pointer}
+.fab:active{transform:translateY(1px)}
+
+@media(min-width:721px){
+	.fab{display:none}
+}
+
+/* Make mobile action buttons slightly larger */
+.mobile-actions .btn{padding:12px 14px}
+
+/* Icon button specifics */
+.btn svg{display:block;pointer-events:none}
+.btn {display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.edit, .btn.delete, .btn.save {width:40px;height:36px;padding:6px}
+.btn.cancel{min-width:40px}
+
+@media(max-width:720px){
+	.btn.edit, .btn.delete, .btn.save {width:48px;height:44px}
+}
+
+/* Ensure inputs and selects and buttons never force horizontal overflow */
+input, select, button, .inline-input { max-width: 100%; box-sizing: border-box; }
+
+/* Table wrapper: allow vertical scroll but hide horizontal overflow */
+.table{overflow-x:hidden}
+
+/* In case long text needs to wrap inside cells on smaller widths */
+.row .cell span, .row .cell .amount{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Bottom action bar */
+.bottom-bar{margin-top:14px;padding:12px 14px;border-top:1px solid #eef2f6;display:flex;justify-content:flex-end;gap:12px}
+.bottom-bar .btn{padding:8px 12px}
+
+@media(max-width:720px){
+	.bottom-bar{justify-content:space-between;flex-wrap:wrap}
+	.bottom-bar .btn{flex:1}
+}
+
+/* Modal styles for create popup */
+.modal-backdrop{position:fixed;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.28), rgba(2,6,23,0.44));display:flex;align-items:center;justify-content:center;z-index:60}
+.modal{background:linear-gradient(180deg,#ffffff,#fbfdff);padding:20px;border-radius:14px;max-width:520px;width:96%;box-shadow:0 20px 60px rgba(2,6,23,.28);border:1px solid rgba(15,23,32,0.04)}
+.modal h3{margin:0 0 10px 0;font-size:18px}
+.modal-form{display:flex;gap:10px;flex-direction:column}
+.modal-form .grow{flex:1}
+.modal-form input,.modal-form select{padding:12px;border:1px solid rgba(15,23,32,0.06);border-radius:10px;background:#fff}
+.modal-form .btn{min-width:90px;padding:10px 14px;border-radius:10px}
+
+/* MultiSelect styles */
+.multi-select{position:relative;font-size:14px}
+.ms-control{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border:1px solid rgba(15,23,32,0.08);border-radius:10px;background:var(--card);cursor:pointer;min-width:200px;min-height:44px}
+.ms-control:focus-within{box-shadow:0 6px 18px var(--ring);outline:none}
+.ms-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:220px;min-width:0}
+.ms-tag{background:linear-gradient(90deg,#eef2ff,#e0f2fe);padding:5px 10px;border-radius:999px;font-weight:600;color:#0b3b66;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-placeholder{color:var(--muted);font-size:14px}
+.ms-caret{opacity:0.9;margin-left:8px}
+.ms-dropdown{position:absolute;left:0;right:0;margin-top:8px;background:var(--card);border:1px solid rgba(15,23,32,0.06);border-radius:10px;z-index:120;box-shadow:0 14px 40px rgba(2,6,23,0.12);width:100%;max-width:420px}
+.ms-search{width:calc(100% - 16px);padding:10px;border:1px solid rgba(15,23,32,0.06);border-radius:8px}
+.ms-option{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid rgba(2,6,23,0.03);cursor:pointer}
+.ms-option:hover{background:var(--glass)}
+.ms-empty{padding:14px;color:var(--muted);text-align:center}
+
+html[data-theme="dark"] .ms-control, html[data-theme="dark"] .ms-dropdown{background:#071126}
+html[data-theme="dark"] .ms-tag{background:linear-gradient(90deg,#07302b,#083e2f);color:#d2f7e6}
+
+/* Login screen styles */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,23,0.04), rgba(2,6,23,0.02));padding:40px}
+.login-card{background:var(--card);padding:22px;border-radius:12px;box-shadow:0 18px 60px rgba(2,6,23,0.08);max-width:420px;width:100%}
+.login-card h2{margin:0 0 12px 0}
+.login-input{width:100%;padding:10px;border:1px solid rgba(15,23,32,0.06);border-radius:8px;margin-top:6px}
+.login-actions{display:flex;flex-direction:column;gap:10px}
+.login-error{color:var(--danger);margin-top:10px;font-weight:700}
+.login-note{font-size:13px;color:var(--muted)}
+
+/* Login button tweaks */
+.login-card .btn{padding:8px 12px;border-radius:8px}
+.login-card .btn.save{background:linear-gradient(90deg,var(--accent),#0b75ff);color:#fff;border:none;box-shadow:0 8px 24px rgba(11,107,255,0.12)}
+.login-card .btn.cancel{background:#f1f5f9;color:#0f1720}
+.login-card .btn[disabled]{opacity:0.6}
+.login-actions > div label{font-size:13px;color:var(--muted)}
+
+.admin-block .admin-actions{display:flex;gap:8px}
+.admin-block .admin-primary{flex:1;padding:12px 14px;font-size:15px}
+.admin-block .admin-actions .btn.cancel{padding:10px 12px}
+
+/* Header-specific action buttons (e.g. Create in table header) */
+.row.header .btn{
+	width: auto !important;
+	height: auto !important;
+	padding: 8px 12px !important;
+	border-radius: 10px !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+	min-width: 0 !important;
+}
+.row.header .btn.save{
+	background: linear-gradient(90deg,var(--accent),#0b75ff) !important;
+	color: white !important;
+	border: none !important;
+	box-shadow: 0 8px 20px var(--ring) !important;
+}

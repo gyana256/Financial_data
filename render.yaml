@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: fina-supabase-ui
+    env: static
+    plan: free
+    path: fina/supabase-ui
+    staticPublishPath: dist
+    buildCommand: npm install && npm run build
+    envVars:
+      - key: VITE_SUPABASE_URL
+        scope: secret
+      - key: VITE_SUPABASE_ANON_KEY
+        scope: secret
+    autoDeploy: true

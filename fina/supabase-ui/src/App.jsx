@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import * as XLSX from 'xlsx'
+import Analytics from './Analytics'
 
 const TYPE_OPTIONS = ['Expenditure', 'Income']
 
@@ -82,8 +83,10 @@ export default function App() {
   const [totalIncome, setTotalIncome] = useState(0)
   const [totalExpenditure, setTotalExpenditure] = useState(0)
   const [theme, setTheme] = useState(() => {
-    try { return localStorage.getItem('theme') || 'light' } catch(e){ return 'light' }
+    try { return localStorage.getItem('theme') || 'dark' } catch(e){ return 'dark' }
   })
+  // Analytics as the default home page (hardcoded)
+  const [view, setView] = useState('analytics')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [sortBy, setSortBy] = useState('id')
@@ -201,6 +204,8 @@ export default function App() {
   useEffect(() => {
     try { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('theme', theme) } catch(e){}
   }, [theme])
+
+  // view persistence removed: Analytics is the default home page
 
   async function createRow(e) {
     if (role !== 'admin') { alert('Only admin can create rows'); return false }
@@ -394,6 +399,27 @@ export default function App() {
     return n.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})
   }
 
+  function formatDateWithOrdinal(dateStr){
+    if (!dateStr) return ''
+    // try to parse ISO date or timestamp
+    const d = new Date(dateStr)
+    if (Number.isNaN(d.getTime())) return String(dateStr)
+    const day = d.getDate()
+    const year = d.getFullYear()
+    const month = d.toLocaleString('en-US', { month: 'short' })
+    const getSuffix = (n) => {
+      const v = n % 100
+      if (v >= 11 && v <= 13) return 'th'
+      switch (n % 10) {
+        case 1: return 'st'
+        case 2: return 'nd'
+        case 3: return 'rd'
+        default: return 'th'
+      }
+    }
+    return `${day}${getSuffix(day)} ${month} ${year}`
+  }
+
   function renderMiniChart(arr, color='#0b6bff'){
     return null
   }
@@ -440,7 +466,13 @@ export default function App() {
   return (
     <div className="container">
       <div className="header-row">
-        <h1>Financial Data</h1>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <h1>Financial Data</h1>
+          <div style={{display:'flex',gap:8}}>
+            <button className="btn" onClick={() => setView('analytics')} aria-pressed={view==='analytics'}>Analytics</button>
+            <button className="btn" onClick={() => setView('table')} aria-pressed={view==='table'}>Table</button>
+          </div>
+        </div>
         <div className="controls">
           <div className="small-muted">Manage your records — create, edit, import/export</div>
           <button className="btn" title="Toggle theme" onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}>
@@ -455,172 +487,180 @@ export default function App() {
 
       {/* (removed earlier duplicate filters) */}
 
-      {/* Dashboard summary (charts removed) */}
-      <div className="dashboard">
-        <div className="card income">
-          <div className="card-title">Total Income</div>
-          <div className="card-value">{formatAmount(totalIncome)}</div>
-        </div>
-        <div className="card expenditure">
-          <div className="card-title">Total Expenditure</div>
-          <div className="card-value">{formatAmount(totalExpenditure)}</div>
-        </div>
-        <div className="card balance">
-          <div className="card-title">Net</div>
-          <div className="card-value">{formatAmount(totalIncome - totalExpenditure)}</div>
-        </div>
-      </div>
+      {view === 'analytics' && (
+        <Analytics onBack={() => setView('table')} />
+      )}
 
-      {/* (Create moved to table header) */}
-
-  {/* Filters directly above the table */}
-      <div className="filters" style={{marginBottom:10, display:'flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
-        <input placeholder="Search id, name or type..." value={q} onChange={e => { setQ(e.target.value); setPage(0) }} />
-        <select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(0) }}>
-          <option>All</option>
-          {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <div style={{minWidth:180}}>
-          <MultiSelect options={names} value={nameSelection} onChange={(newVal) => { setNameSelection(newVal); setNameFilter(newVal && newVal.length ? newVal : null); setPage(0) }} placeholder="Select names..." />
-        </div>
-        <label className="small-muted">From <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(0) }} /></label>
-        <label className="small-muted">To <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(0) }} /></label>
-  <button className="btn" onClick={() => { setQ(''); setFilterType('All'); setNameSelection([]); setNameFilter(null); setDateFrom(''); setDateTo(''); setPage(0) }}>Clear</button>
-      </div>
-
-      <div className="table">
-        <div className="row header">
-          <div style={{cursor:'pointer'}} onClick={() => toggleSort('name')}>Name {sortBy==='name' ? (sortAsc ? '▲' : '▼') : ''}</div>
-          <div style={{cursor:'pointer'}} onClick={() => toggleSort('date')}>Date {sortBy==='date' ? (sortAsc ? '▲' : '▼') : ''}</div>
-          <div style={{cursor:'pointer'}} onClick={() => toggleSort('type')}>Type {sortBy==='type' ? (sortAsc ? '▲' : '▼') : ''}</div>
-          <div style={{cursor:'pointer'}} onClick={() => toggleSort('amount')}>Amount {sortBy==='amount' ? (sortAsc ? '▲' : '▼') : ''}</div>
-          <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',gap:8}}>
-            {role === 'admin' ? (
-              <button className="btn save" onClick={() => setShowCreateModal(true)}>Create</button>
-            ) : (
-              <button className="btn" disabled title="Guest has read-only access">Create</button>
-            )}
+      {view === 'table' && (
+        <>
+          {/* Dashboard summary (charts removed) */}
+          <div className="dashboard">
+            <div className="card income">
+              <div className="card-title">Total Income</div>
+              <div className="card-value">{formatAmount(totalIncome)}</div>
+            </div>
+            <div className="card expenditure">
+              <div className="card-title">Total Expenditure</div>
+              <div className="card-value">{formatAmount(totalExpenditure)}</div>
+            </div>
+            <div className="card balance">
+              <div className="card-title">Net</div>
+              <div className="card-value">{formatAmount(totalIncome - totalExpenditure)}</div>
+            </div>
           </div>
-        </div>
 
-        {loading && <div className="empty">Loading...</div>}
-        {!loading && displayedRows.length === 0 && <div className="empty">No rows found.</div>}
+          {/* (Create moved to table header) */}
 
-        {displayedRows.map(r => {
-          return (
-            <div className="row" key={r.id}>
+          {/* Filters directly above the table */}
+          <div className="filters" style={{marginBottom:10, display:'flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
+            <input placeholder="Search id, name or type..." value={q} onChange={e => { setQ(e.target.value); setPage(0) }} />
+            <select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(0) }}>
+              <option>All</option>
+              {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <div style={{minWidth:180}}>
+              <MultiSelect options={names} value={nameSelection} onChange={(newVal) => { setNameSelection(newVal); setNameFilter(newVal && newVal.length ? newVal : null); setPage(0) }} placeholder="Select names..." />
+            </div>
+            <label className="small-muted">From <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(0) }} /></label>
+            <label className="small-muted">To <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(0) }} /></label>
+            <button className="btn" onClick={() => { setQ(''); setFilterType('All'); setNameSelection([]); setNameFilter(null); setDateFrom(''); setDateTo(''); setPage(0) }}>Clear</button>
+          </div>
 
-              <div className="cell">
-                <span>{r.name}</span>
-              </div>
-
-              <div className="cell">
-                <span className="small-muted">{r.date}</span>
-              </div>
-
-              <div className="cell">
-                <span className={`badge ${r.type === 'Income' ? 'income' : 'expenditure'}`}>{r.type}</span>
-              </div>
-
-              <div className="cell amount-cell">
-                <span className="amount">{formatAmount(r.amount)}</span>
-              </div>
-
-              <div className="actions mobile-actions">
+          <div className="table">
+            <div className="row header">
+              <div style={{cursor:'pointer'}} onClick={() => toggleSort('name')}>Name {sortBy==='name' ? (sortAsc ? '▲' : '▼') : ''}</div>
+              <div style={{cursor:'pointer'}} onClick={() => toggleSort('date')}>Date {sortBy==='date' ? (sortAsc ? '▲' : '▼') : ''}</div>
+              <div style={{cursor:'pointer'}} onClick={() => toggleSort('type')}>Type {sortBy==='type' ? (sortAsc ? '▲' : '▼') : ''}</div>
+              <div style={{cursor:'pointer'}} onClick={() => toggleSort('amount')}>Amount {sortBy==='amount' ? (sortAsc ? '▲' : '▼') : ''}</div>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',gap:8}}>
                 {role === 'admin' ? (
-                  <>
-                    <button className="btn edit" onClick={() => startInlineEdit(r)} aria-label={`Edit row ${r.id}`} title="Edit">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/><path d="M20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
-                    </button>
-                    <button className="btn delete" onClick={() => deleteRow(r.id)} aria-label={`Delete row ${r.id}`} title="Delete">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12z" fill="currentColor"/><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>
-                    </button>
-                  </>
+                  <button className="btn save" onClick={() => setShowCreateModal(true)}>Create</button>
                 ) : (
-                  <>
-                    {/* guest: no edit, show disabled delete */}
-                    <button className="btn" disabled title="Guest has read-only access">Edit</button>
-                    <button className="btn" disabled title="Guest has read-only access">Delete</button>
-                  </>
+                  <button className="btn" disabled title="Guest has read-only access">Create</button>
                 )}
               </div>
             </div>
-          )
-        })}
-      </div>
-  <div className="pagination-row" style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:12}}>
-        <div className="small-muted">Showing {rows.length} of {total} total — page total: {formatAmount(pageTotal)}</div>
-  <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(0) }}>
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
-          <button className="btn" onClick={() => setPage(0)} disabled={page===0}>First</button>
-          <button className="btn" onClick={() => setPage(p => Math.max(0, p-1))} disabled={page===0}>Prev</button>
-          <div className="small-muted">Page {page+1} / {Math.max(1, Math.ceil((total || 0) / pageSize))}</div>
-          <button className="btn" onClick={() => setPage(p => p+1)} disabled={(page+1)*pageSize >= (total||0)}>Next</button>
-          <button className="btn" onClick={() => setPage(Math.max(0, Math.ceil((total||0)/pageSize)-1))} disabled={(page+1)*pageSize >= (total||0)}>Last</button>
-        </div>
-      </div>
-      {/* Bottom action bar: export/import */}
-      <div className="bottom-bar">
-        <div style={{display:'flex',gap:8}}>
-          <button className="btn" onClick={exportXLSX} title="Export all data to Excel">Export XLSX (all)</button>
-          {role === 'admin' ? (
-            <label className="btn" style={{display:'inline-flex',alignItems:'center',gap:8,cursor:'pointer'}}>
-              Import XLSX
-              <input type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={e => { if (e.target.files && e.target.files[0]) handleImportXLSX(e.target.files[0]) }} />
-            </label>
-          ) : (
-            <button className="btn" disabled title="Guest has read-only access">Import XLSX</button>
+
+            {loading && <div className="empty">Loading...</div>}
+            {!loading && displayedRows.length === 0 && <div className="empty">No rows found.</div>}
+
+            {displayedRows.map(r => {
+              return (
+                <div className="row" key={r.id}>
+
+                  <div className="cell">
+                    <span>{r.name}</span>
+                  </div>
+
+                  <div className="cell">
+                    <span className="small-muted">{formatDateWithOrdinal(r.date)}</span>
+                  </div>
+
+                  <div className="cell">
+                    <span className={`badge ${r.type === 'Income' ? 'income' : 'expenditure'}`}>{r.type}</span>
+                  </div>
+
+                  <div className="cell amount-cell">
+                    <span className="amount">{formatAmount(r.amount)}</span>
+                  </div>
+
+                  <div className="actions mobile-actions">
+                    {role === 'admin' ? (
+                      <>
+                        <button className="btn edit" onClick={() => startInlineEdit(r)} aria-label={`Edit row ${r.id}`} title="Edit">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/><path d="M20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>
+                        </button>
+                        <button className="btn delete" onClick={() => deleteRow(r.id)} aria-label={`Delete row ${r.id}`} title="Delete">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12z" fill="currentColor"/><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/></svg>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {/* guest: no edit, show disabled delete */}
+                        <button className="btn" disabled title="Guest has read-only access">Edit</button>
+                        <button className="btn" disabled title="Guest has read-only access">Delete</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="pagination-row" style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:12}}>
+            <div className="small-muted">Showing {rows.length} of {total} total — page total: {formatAmount(pageTotal)}</div>
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(0) }}>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <button className="btn" onClick={() => setPage(0)} disabled={page===0}>First</button>
+              <button className="btn" onClick={() => setPage(p => Math.max(0, p-1))} disabled={page===0}>Prev</button>
+              <div className="small-muted">Page {page+1} / {Math.max(1, Math.ceil((total || 0) / pageSize))}</div>
+              <button className="btn" onClick={() => setPage(p => p+1)} disabled={(page+1)*pageSize >= (total||0)}>Next</button>
+              <button className="btn" onClick={() => setPage(Math.max(0, Math.ceil((total||0)/pageSize)-1))} disabled={(page+1)*pageSize >= (total||0)}>Last</button>
+            </div>
+          </div>
+          {/* Bottom action bar: export/import */}
+          <div className="bottom-bar">
+            <div style={{display:'flex',gap:8}}>
+              <button className="btn" onClick={exportXLSX} title="Export all data to Excel">Export XLSX (all)</button>
+              {role === 'admin' ? (
+                <label className="btn" style={{display:'inline-flex',alignItems:'center',gap:8,cursor:'pointer'}}>
+                  Import XLSX
+                  <input type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={e => { if (e.target.files && e.target.files[0]) handleImportXLSX(e.target.files[0]) }} />
+                </label>
+              ) : (
+                <button className="btn" disabled title="Guest has read-only access">Import XLSX</button>
+              )}
+            </div>
+          </div>
+
+          {/* Floating action button for mobile to focus the create input (admin only) */}
+          {role === 'admin' && view === 'table' && <button className="fab" onClick={() => setShowCreateModal(true)} title="Create new">＋</button>}
+
+          {/* Create Modal */}
+          {showCreateModal && (
+            <div className="modal-backdrop" onMouseDown={() => setShowCreateModal(false)}>
+              <div className="modal" onMouseDown={e => e.stopPropagation()} role="dialog" aria-modal="true">
+                <h3>Create financial record</h3>
+                <form onSubmit={async (e) => { e.preventDefault(); const ok = await createRow(e); if (ok) setShowCreateModal(false) }} className="form modal-form">
+                  <input autoFocus className="grow" placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+                  <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required />
+                  <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+                    {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <input placeholder="Amount" type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} required />
+                  <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:8}}>
+                    <button type="button" className="btn cancel" onClick={() => setShowCreateModal(false)}>Cancel</button>
+                    <button type="submit" className="btn save">Create</button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
-        </div>
-      </div>
-
-      {/* Floating action button for mobile to focus the create input (admin only) */}
-      {role === 'admin' && <button className="fab" onClick={() => setShowCreateModal(true)} title="Create new">＋</button>}
-
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div className="modal-backdrop" onMouseDown={() => setShowCreateModal(false)}>
-          <div className="modal" onMouseDown={e => e.stopPropagation()} role="dialog" aria-modal="true">
-            <h3>Create financial record</h3>
-            <form onSubmit={async (e) => { e.preventDefault(); const ok = await createRow(e); if (ok) setShowCreateModal(false) }} className="form modal-form">
-              <input autoFocus className="grow" placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-              <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required />
-              <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
-                {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <input placeholder="Amount" type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} required />
-              <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:8}}>
-                <button type="button" className="btn cancel" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                <button type="submit" className="btn save">Create</button>
+          {/* Edit Modal */}
+          {editModalRow && (
+            <div className="modal-backdrop" onMouseDown={() => { setEditModalRow(null); setEditForm(blankForm()) }}>
+              <div className="modal" onMouseDown={e => e.stopPropagation()} role="dialog" aria-modal="true">
+                <h3>Edit financial record</h3>
+                <form onSubmit={async (e) => { e.preventDefault(); await saveEditModal() }} className="form modal-form">
+                  <input autoFocus className="grow" placeholder="Name" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} required />
+                  <input type="date" value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} required />
+                  <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })}>
+                    {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <input placeholder="Amount" type="number" step="0.01" value={editForm.amount} onChange={e => setEditForm({ ...editForm, amount: e.target.value })} required />
+                  <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:8}}>
+                    <button type="button" className="btn cancel" onClick={() => { setEditModalRow(null); setEditForm(blankForm()) }}>Cancel</button>
+                    <button type="submit" className="btn save">Save</button>
+                  </div>
+                </form>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-      {/* Edit Modal */}
-      {editModalRow && (
-        <div className="modal-backdrop" onMouseDown={() => { setEditModalRow(null); setEditForm(blankForm()) }}>
-          <div className="modal" onMouseDown={e => e.stopPropagation()} role="dialog" aria-modal="true">
-            <h3>Edit financial record</h3>
-            <form onSubmit={async (e) => { e.preventDefault(); await saveEditModal() }} className="form modal-form">
-              <input autoFocus className="grow" placeholder="Name" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} required />
-              <input type="date" value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} required />
-              <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })}>
-                {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <input placeholder="Amount" type="number" step="0.01" value={editForm.amount} onChange={e => setEditForm({ ...editForm, amount: e.target.value })} required />
-              <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:8}}>
-                <button type="button" className="btn cancel" onClick={() => { setEditModalRow(null); setEditForm(blankForm()) }}>Cancel</button>
-                <button type="submit" className="btn save">Save</button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

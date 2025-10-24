@@ -83,7 +83,7 @@ input[type="date"]{padding:8px;border:1px solid rgba(15,23,32,0.06);border-radiu
 @media (max-width: 920px) {
 	.container{padding:18px}
 	.header-row{flex-direction:column;align-items:flex-start;gap:8px}
-	.controls{width:100%}
+	.controls{width:100%;flex-wrap:wrap;justify-content:space-between}
 	.filters{width:100%;display:flex;gap:8px;flex-wrap:wrap}
 	.filters input{flex:1;min-width:120px}
 
@@ -101,6 +101,8 @@ input[type="date"]{padding:8px;border:1px solid rgba(15,23,32,0.06);border-radiu
 	.row .cell:nth-child(3)::before{content:"Type: ";font-weight:700}
 	.row .cell:nth-child(4)::before{content:"Amount: ";font-weight:700}
 	.row .cell:nth-child(5)::before{content:"Actions: ";font-weight:700}
+	/* Ensure actions container also shows a label when it's not a .cell */
+	.row .actions::before{content:"Actions: ";font-weight:700;display:block;margin-bottom:6px}
 	.row .cell::before{display:inline-block;margin-right:6px}
 
 	.actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -109,6 +111,9 @@ input[type="date"]{padding:8px;border:1px solid rgba(15,23,32,0.06);border-radiu
 	.inline-input{padding:10px}
 
 	.small-muted{text-align:center}
+
+	/* Allow cell text to wrap on small screens so inline inputs and long text are visible */
+	.row .cell span, .row .cell .amount{white-space:normal}
 }
 
 /* Badges and amount styles */
@@ -154,6 +159,15 @@ input, select, button, .inline-input { max-width: 100%; box-sizing: border-box; 
 @media(max-width:720px){
 	.bottom-bar{justify-content:space-between;flex-wrap:wrap}
 	.bottom-bar .btn{flex:1}
+}
+
+/* Pagination row responsive tweaks */
+@media(max-width:720px){
+	.pagination-row{flex-direction:column;align-items:stretch;gap:8px}
+	.pagination-row .small-muted{order:2;text-align:left}
+	.pagination-row > div{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+	.pagination-row select{flex:1;min-width:90px}
+	.pagination-row .btn{flex:1;min-width:60px}
 }
 
 /* Modal styles for create popup */

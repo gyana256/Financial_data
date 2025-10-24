@@ -1,0 +1,8 @@
+{
+  "name": "fina-root-scripts",
+  "private": true,
+  "scripts": {
+    "build": "cd fina/supabase-ui && npm install && npm run build",
+    "dev": "cd fina/supabase-ui && npm run dev"
+  }
+}

@@ -256,3 +256,10 @@ body { padding:28px; -webkit-font-smoothing:antialiased; }
 .table tbody td { padding:12px; border-bottom:1px solid rgba(2,6,23,0.03); }
 .table tbody tr:hover td { background: rgba(2,6,23,0.02); }
 
+/* Ensure dashboard cards are dark in dark mode */
+html[data-theme="dark"] .dashboard .card{
+	background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)) !important;
+	box-shadow: 0 8px 28px rgba(2,6,23,0.6) !important;
+	border: 1px solid rgba(255,255,255,0.03) !important;
+}
+

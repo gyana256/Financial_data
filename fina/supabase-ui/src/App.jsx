@@ -89,8 +89,9 @@ export default function App() {
   const [view, setView] = useState('analytics')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
-  const [sortBy, setSortBy] = useState('id')
-  const [sortAsc, setSortAsc] = useState(true)
+  // default sort: newest date first
+  const [sortBy, setSortBy] = useState('date')
+  const [sortAsc, setSortAsc] = useState(false)
 
   const [form, setForm] = useState(blankForm())
   const [editingRowId, setEditingRowId] = useState(null)

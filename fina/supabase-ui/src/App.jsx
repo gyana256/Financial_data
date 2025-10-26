@@ -82,8 +82,9 @@ export default function App() {
   const [total, setTotal] = useState(0)
   const [totalIncome, setTotalIncome] = useState(0)
   const [totalExpenditure, setTotalExpenditure] = useState(0)
+  // default to dark theme; keep persisted user choice if present
   const [theme, setTheme] = useState(() => {
-    try { return localStorage.getItem('theme') || 'dark' } catch(e){ return 'dark' }
+    try { const stored = localStorage.getItem('theme'); return stored ? stored : 'dark' } catch(e){ return 'dark' }
   })
   // Analytics as the default home page (hardcoded)
   const [view, setView] = useState('analytics')
